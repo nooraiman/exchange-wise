@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Rate Calculator</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
+    <!-- Include Select2 CSS -->
+    <link href="/static/vendor/select2.min.css" rel="stylesheet" />
+    <!-- Include jQuery -->
+    <script src="/static/vendor/jquery.min.js"></script>
+    <!-- Include Select2 JS -->
+    <script src="/static/vendor/select2.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mt-5">Exchange Rate Calculator</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="form-group mt-4">
+                    <label for="currency">Currency Pair:</label>
+                    <select class="form-control" id="currency"></select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="form-group">
+                    <label for="amount">Amount:</label>
+                    <input type="number" class="form-control" id="amount" value="1" placeholder="Enter amount">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mt-4" id="result"></h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            var exchangeRates;
+
+            var urlParams = new URLSearchParams(window.location.search);
+            var amount = urlParams.get('amount') || '1';
+            var currency = urlParams.get('currency') || 'USDMYR';
+
+            // Load the exchange rates from wise.json
+            $.getJSON("/static/wise.json", function (data) {
+                exchangeRates = data;
+
+                // Populate the select with the keys from the exchangeRates object
+                var currencyOptions = Object.keys(exchangeRates).map(function (currency) {
+                    return '<option value="' + currency + '">' + currency + '</option>';
+                });
+                $('#currency').html(currencyOptions.join(''));
+
+                // Set the initial values of the #amount input and #currency select
+                $('#amount').val(amount);
+                $('#currency').val(currency).trigger('change');
+
+                // Initialize Select2 on the currency select
+                $('#currency').select2({
+                    width: '100%'
+                });
+
+                // Run at the beginning 1 USD to MYR
+                calculateExchangeRate();
+            });
+
+            // Calculate the exchange rate when the amount is input
+            function calculateExchangeRate() {
+                if (!exchangeRates) {
+                    $("#result").text("Exchange rates not loaded yet");
+                    return;
+                }
+
+                if ($("#amount").val() == "" || isNaN($("#amount").val()) || $("#currency").val() == "") {
+                    $("#result").text("");
+                    return;
+                }
+
+                var currency = $("#currency").val();
+                var amount = parseFloat($("#amount").val()).toFixed(2);
+                var result = (amount * exchangeRates[currency]).toFixed(2);
+                $("#result").text(amount + " " + currency.substring(0, 3) + " : " + result + " " + currency.substring(3));
+            }
+
+            // Calculate the exchange rate when the button is clicked
+            $("#currency").click(function () {
+                calculateExchangeRate();
+            });
+
+            // Handle the change event on the currency select
+            $("#currency").change(function () {
+                calculateExchangeRate();
+            });
+
+            // Handle the type event on the amount input
+            $("#amount").on("input", function () {
+                calculateExchangeRate();
+            });
+
+            // Handle the change event on the amount input
+            $("#amount").on(function () {
+                calculateExchangeRate();
+            });
+        });
+    </script>
+</body>
+
+</html>
