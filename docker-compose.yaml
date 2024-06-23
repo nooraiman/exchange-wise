@@ -1,0 +1,17 @@
+services:
+  scrape:
+    build: scrapper
+    image: exchange-scrapper
+    # environment:
+    #   - SE_OFFLINE=false
+    volumes:
+      - /home/nooraiman/exchange:/data
+  web:
+    build: web
+    depends_on:
+      - scrape
+    image: exchange-web
+    volumes:
+      - /home/nooraiman/exchange/wise.json:/app/static/wise.json
+    ports:
+      - "5909:5909"
